@@ -9,33 +9,41 @@ const SearchExercises = ({ setExercises, bodyPart, setBodyPart }) => {
 
   useEffect(() => {
     const fetchExercisesData = async () => {
-      const bodyPartsData = await fetchData(
-        "https://exercisedb.p.rapidapi.com/exercises/bodyPartList",
-        exerciseOptions
-      );
-      setBodyParts(["all", ...bodyPartsData]);
+      try {
+        const bodyPartsData = await fetchData(
+          "https://exercisedb.p.rapidapi.com/exercises/bodyPartList",
+          exerciseOptions
+        );
+        setBodyParts(["all", ...bodyPartsData]);
+      } catch (error) {
+        console.error("Error fetching body parts:", error);
+      }
     };
 
     fetchExercisesData();
   }, []);
 
   const handleSearch = async () => {
-    if (search) {
-      const exerciseData = await fetchData(
-        "https://exercisedb.p.rapidapi.com/exercises",
-        exerciseOptions
-      );
+    if (search.trim()) {
+      try {
+        // Use API's built-in search endpoint for full matching results
+        const searchTerm = search.toLowerCase();
+        const exerciseData = await fetchData(
+          `https://exercisedb.p.rapidapi.com/exercises/name/${searchTerm}`,
+          exerciseOptions
+        );
 
-      const searchedExercise = exerciseData.filter((exercise) =>
-        exercise.name.toLowerCase().includes(search) ||
-        exercise.target.toLowerCase().includes(search) ||
-        exercise.equipment.toLowerCase().includes(search) ||
-        exercise.bodyPart.toLowerCase().includes(search)
-      );
-      console.log("Filtered Exercise List:", searchedExercise); 
+        setSearch("");
+        setExercises(exerciseData);
+      } catch (error) {
+        console.error("Error searching exercises:", error);
+      }
+    }
+  };
 
-      setSearch("");
-      setExercises(searchedExercise);
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter") {
+      handleSearch();
     }
   };
 
@@ -64,7 +72,8 @@ const SearchExercises = ({ setExercises, bodyPart, setBodyPart }) => {
           }}
           height="76px"
           value={search}
-          onChange={(e) => setSearch(e.target.value.toLowerCase().trim())}
+          onChange={(e) => setSearch(e.target.value)}
+          onKeyDown={handleKeyDown}
           placeholder="Search Exercises"
           type="text"
         />
